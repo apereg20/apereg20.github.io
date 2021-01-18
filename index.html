@@ -1,0 +1,282 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!--Añadimos los estilos de la carpeta public y el cdn de bootstrap-->
+    <link rel="stylesheet" href="/public/style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>Chat con Vuejs</title>
+</head>
+<body>
+    <!-- Creamos el contenedor con ID APP dénde trabajaremos con VueJS-->
+    <div id="app">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <h1 class="title-page">Chat</h1>
+                    <div class="container-chat">
+                        <ul id="chat">
+                        	<li>
+                    			<p align="center" justify="center">
+                    				<img id="ia" alt="Imagen aleatoria" src="https://i.ibb.co/hRD10gK/inicio.jpg" align="center" justify="center" height="341" width="255" /> 
+                    			</p>
+                    			<p align="center" justify="center">
+                    				<span>{{ nameU }}</span>
+                    			</p>
+                    			<p align="center" justify="center">
+									<button @click="cambiar" align="center" justify="center">Cambiar imagen</button>
+								</p>
+                    		</li>
+                            <!--Recorremos el array de mensajes y mostramos uno por uno en la lista-->
+                            <li v-for="m in messages">
+                                {{m}}
+                            </li>
+                        </ul>
+                        <!-- con el atributo submit, le indicamos que al usar el input submit llamaremos a la funcíon sendMessage-->
+                        <form @submit.prevent="sendMessage">
+                            <input type="text" placeHolder="Mensaje..." v-model="message" class="form-control">
+                            <input type="text" placeholder="Nombre" v-model="username" class="form-control">
+                            <input type="submit" value="Enviar" class="btn btn-chat">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        //inicializamos la variable socket que utilizaremos en created
+        var socket = null;
+        var app = new Vue({
+            el:'#app',
+            data:{
+                //Inicializamos las variables
+                message:'',
+                newmsg: '',
+                nameU: '',
+                username:'',
+                messages: [],
+                imgs:['https://raw.githubusercontent.com/apereg20/DrinkingGame/main/imagenes/inicio.jpg?token=AIX7CDATNTONUIZTPCIRW2DAASOI6'],
+                numclicks: 0,
+                cambia_imagen:[
+                'https://i.ibb.co/7jbc56v/image.jpg',
+                'https://i.ibb.co/5FGyHz3/1.jpg', 
+                'https://i.ibb.co/bRxKhfM/2.jpg', 
+                'https://i.ibb.co/8jzF5LM/3.jpg', 
+                'https://i.ibb.co/BgTYzmN/4.jpg', 
+                'https://i.ibb.co/dkDZ8wc/5.jpg',
+                'https://i.ibb.co/r0qx8Rr/6.jpg',
+                'https://i.ibb.co/vYjHtbs/7.jpg',
+                'https://i.ibb.co/0hJ8jfB/8.jpg',
+                'https://i.ibb.co/16p7BQL/9.jpg',
+                'https://i.ibb.co/cX3bcb5/10.jpg',
+                'https://i.ibb.co/bgsBDpV/11.jpg',
+                'https://i.ibb.co/kG61Fkp/12.jpg',
+                'https://i.ibb.co/xLvzkMr/13.jpg',
+                'https://i.ibb.co/nMMSR8h/14.jpg',
+                'https://i.ibb.co/w6jZ2t7/15.jpg',
+                'https://i.ibb.co/jrzsVqP/16.jpg',
+                'https://i.ibb.co/ZJnQcv0/17.jpg',
+                'https://i.ibb.co/ncNHjC8/18.jpg',
+                'https://i.ibb.co/YQpKzs2/19.jpg',
+                'https://i.ibb.co/F6gZJk8/20.jpg',
+                'https://i.ibb.co/zmsMGZ6/21.jpg',
+                'https://i.ibb.co/myYR84p/22.jpg',
+                'https://i.ibb.co/0sszZZS/23.jpg',
+                'https://i.ibb.co/J5MMDhW/24.jpg',
+                'https://i.ibb.co/47KKJ0s/25.jpg',
+                'https://i.ibb.co/Nsb6d3s/26.jpg',
+                'https://i.ibb.co/0rQMhdM/27.jpg',
+                'https://i.ibb.co/hV2hWJD/28.jpg',
+                'https://i.ibb.co/XZj55Y9/29.jpg',
+                'https://i.ibb.co/5hBp05m/30.jpg',
+                'https://i.ibb.co/NZKFN87/31.jpg',
+                'https://i.ibb.co/D5Fyf9Z/32.jpg',
+                'https://i.ibb.co/D5jf9ww/33.jpg',
+                'https://i.ibb.co/ZMrzvXX/34.jpg',
+                'https://i.ibb.co/Y8x2vLW/35.jpg',
+                'https://i.ibb.co/XtLX90M/36.jpg',
+                'https://i.ibb.co/SK9vzVJ/37.jpg',
+                'https://i.ibb.co/9q5rzby/38.jpg',
+                'https://i.ibb.co/94vyWxg/39.jpg',
+                'https://i.ibb.co/QH07F6r/40.jpg',
+                'https://i.ibb.co/DCM0hvh/41.png',
+                'https://i.ibb.co/Qp3GYh5/42.jpg',
+                'https://i.ibb.co/W2RLVtR/43.jpg',
+                'https://i.ibb.co/gDf1MYg/44.jpg',
+                'https://i.ibb.co/sbXZzLG/45.jpg',
+                'https://i.ibb.co/ccsh5yW/46.jpg',
+                'https://i.ibb.co/8zMyNtw/47.jpg',
+                'https://i.ibb.co/jW1GHXM/48.jpg',
+                'https://i.ibb.co/yYNDQWF/49.jpg',
+                'https://i.ibb.co/wMW7MhF/50.jpg',
+                'https://i.ibb.co/k136C8s/51.jpg',
+                'https://i.ibb.co/vj9CYGB/52.jpg',
+                'https://i.ibb.co/6rtT3Jb/53.jpg',
+                'https://i.ibb.co/Bgdtj05/54.jpg',
+                'https://i.ibb.co/2hSKWHX/55.jpg',
+                'https://i.ibb.co/wgDrPhp/56.jpg',
+                'https://i.ibb.co/KV0jbrR/57.jpg',
+                'https://i.ibb.co/0hFg23f/58.jpg',
+                'https://i.ibb.co/hDsGr4D/59.jpg',
+                'https://i.ibb.co/68wgssc/60.jpg',
+                'https://i.ibb.co/6NTyn80/61.jpg',
+                'https://i.ibb.co/F58c7XG/62.jpg',
+                'https://i.ibb.co/LhtrR8r/63.jpg',
+                'https://i.ibb.co/8D40nXz/64.jpg',
+                'https://i.ibb.co/sRzZ3NM/65.jpg',
+                'https://i.ibb.co/n3TDTCc/66.jpg',
+                'https://i.ibb.co/WHG2WZz/67.jpg',
+                'https://i.ibb.co/Rv8pjrL/68.jpg',
+                'https://i.ibb.co/QfdJ2GJ/69.png', 
+                'https://i.ibb.co/jRf7fTJ/70.jpg',
+                'https://i.ibb.co/k5R4RCM/71.jpg',
+                'https://i.ibb.co/x1LJbnX/72.jpg',
+                'https://i.ibb.co/kXTN3Qr/73.jpg',
+                'https://i.ibb.co/XZ1JSt2/74.jpg',
+                'https://i.ibb.co/BrvDCJW/75.jpg',
+                'https://i.ibb.co/TgHG38D/76.jpg',
+                'https://i.ibb.co/w7DmY2S/77.jpg',
+                'https://i.ibb.co/Wsz4wz0/78.jpg',
+                'https://i.ibb.co/LY557S4/79.jpg',
+                'https://i.ibb.co/8rFZ2nj/80.jpg',
+                'https://i.ibb.co/XzhQ1mC/81.jpg',
+                'https://i.ibb.co/rp72cNp/82.jpg',
+                'https://i.ibb.co/JQhNTVp/83.jpg',
+                'https://i.ibb.co/nQyszht/84.jpg',
+                'https://i.ibb.co/80zFfSZ/85.jpg',
+                'https://i.ibb.co/wrJqvT0/86.jpg',
+                'https://i.ibb.co/jZ30qfG/87.jpg',
+                'https://i.ibb.co/bLtC7vt/88.jpg',
+                'https://i.ibb.co/T4FVnLb/89.jpg',
+                'https://i.ibb.co/09hGj5B/90.jpg',
+                'https://i.ibb.co/QQm0WGp/91.jpg',
+                'https://i.ibb.co/fCrbs1q/92.jpg',
+                'https://i.ibb.co/tBnbTnp/93.jpg',
+                'https://i.ibb.co/GsLfV6P/94.jpg',
+                'https://i.ibb.co/h26QR5p/95.jpg',
+                'https://i.ibb.co/1LdS4Rs/96.jpg',
+                'https://i.ibb.co/NsCVMsW/97.jpg',
+                'https://i.ibb.co/n8mL5Zx/98.jpg',
+                'https://i.ibb.co/vPjg7gh/99.jpg',
+                'https://i.ibb.co/fHfTywv/100.jpg',
+                'https://i.ibb.co/FYywMdt/101.jpg',
+                'https://i.ibb.co/s5YRLM7/102.jpg',
+                'https://i.ibb.co/X5gT8R0/103.jpg',
+                'https://i.ibb.co/JqpT5bf/104.jpg',
+                'https://i.ibb.co/P64N0HT/105.jpg',
+                'https://i.ibb.co/8rnTNRr/106.jpg',
+                'https://i.ibb.co/fG0sRH9/107.jpg',
+                'https://i.ibb.co/brW4wcc/108.jpg',
+                'https://i.ibb.co/GRj32kL/109.jpg',
+                'https://i.ibb.co/gvJV9GG/110.jpg',
+                'https://i.ibb.co/VBcpXPG/111.jpg',
+                'https://i.ibb.co/7gfZYjW/112.jpg',
+                'https://i.ibb.co/Z2201p5/113.jpg',
+                'https://i.ibb.co/f4P7S9w/114.jpg',
+                'https://i.ibb.co/g4R48QN/115.jpg',
+                'https://i.ibb.co/xqd55B2/116.jpg',
+                'https://i.ibb.co/3k5bg9y/117.jpg',
+                'https://i.ibb.co/VLhR9gr/118.jpg',
+               	'https://i.ibb.co/1rvPygg/119.png',
+                'https://i.ibb.co/RNMxfFW/120.jpg',
+                'https://i.ibb.co/W0WqypF/121.jpg',
+                'https://i.ibb.co/9TqSJh2/122.jpg',
+                'https://i.ibb.co/M6ptN4j/123.jpg',
+                'https://i.ibb.co/kGTBmJN/124.jpg',
+                'https://i.ibb.co/dGYKWwm/125.jpg',
+                'https://i.ibb.co/LPMHtVz/126.jpg',
+                'https://i.ibb.co/jD3SN3K/127.jpg',
+                'https://i.ibb.co/v39NM36/128.jpg',
+                'https://i.ibb.co/XZMjT3Q/129.jpg',
+                'https://i.ibb.co/K9CmjxL/130.png',
+                'https://i.ibb.co/yFWZwZF/131.png',
+                'https://i.ibb.co/nLNJKHn/132.jpg',
+                'https://i.ibb.co/Yb0xfZ5/133.jpg',
+                'https://i.ibb.co/jgNQx0j/134.jpg',
+                'https://i.ibb.co/7KkdJwB/135.jpg',
+                'https://i.ibb.co/kMdNvPw/136.jpg',
+                'https://i.ibb.co/2db75rD/137.jpg',
+                'https://i.ibb.co/SKCVQY3/138.jpg',
+                'https://i.ibb.co/BL96F61/139.jpg',
+                'https://i.ibb.co/nz1G6vC/140.jpg',
+                'https://i.ibb.co/w6QDpVh/141.jpg',
+                'https://i.ibb.co/4dPHwsd/142.jpg',
+                'https://i.ibb.co/bbp6D9b/143.jpg',
+                'https://i.ibb.co/TRC5ZHp/144.jpg',
+                'https://i.ibb.co/7vYjYyT/145.jpg',
+                'https://i.ibb.co/WnKWpGh/146.jpg',
+                'https://i.ibb.co/v1t09Cw/147.jpg',
+                'https://i.ibb.co/0KsRHvh/148.jpg',
+                'https://i.ibb.co/5KSF81p/149.jpg',
+                'https://i.ibb.co/415XgQV/150.jpg',
+                'https://i.ibb.co/9qp9Fhb/151.png',
+                'https://i.ibb.co/x6CZVq5/152.jpg',
+                'https://i.ibb.co/jfGLqpQ/153.jpg',
+                'https://i.ibb.co/ZhgPLTK/154.jpg',
+                'https://i.ibb.co/SQKmXVP/155.jpg',
+                'https://i.ibb.co/vdYRgb3/156.jpg',
+                'https://i.ibb.co/10F2CPq/157.jpg',
+                'https://i.ibb.co/bz29gs6/158.jpg',
+                'https://i.ibb.co/M55JBBm/159.jpg',
+                'https://i.ibb.co/nCPHWkw/160.jpg',
+                'https://i.ibb.co/VpnHGRQ/161.jpg',
+                'https://i.ibb.co/zQVKzrx/162.jpg',
+                'https://i.ibb.co/XyFczSQ/163.jpg',
+                'https://i.ibb.co/gm1QCPK/164.jpg',
+                'https://i.ibb.co/NWwVqRp/165.jpg',
+                'https://i.ibb.co/n0jcVd5/166.jpg'
+                ],
+            },
+            methods:{
+                /*Creamos la funcion sendMessage, que será la que envíe mediante socket 
+                 el mensaje y lo recibiran todos los usuarios en su navegador, 
+                 añadiendose éste al  array messages de cada usuario*/ 
+                sendMessage:function(){
+                    socket.emit('message', this.message + ' - ' + app.username);
+                    console.log(this.message);
+                    this.message = '';
+                },
+                cambiar:function(){
+                	this.numclicks++;
+                	var img = this.cambia_imagen[this.rand(167)-1];
+				    //document.getElementById("ia").src = img;
+				    socket.emit('image', img);
+				    socket.emit('user', app.username);
+				},
+				rand:function(n){
+					// creamos un numero al azar entre 1 y 10 (o cual sea la cantidad de imágenes)
+					return(Math.floor(Math.random() * n + 1 ));
+				}
+            },
+            //Inicialización de la variable socket
+            created: function(){
+                socket = io();
+            },
+
+            //Se reciben los mensajes y se añaden al array
+            mounted: function(){
+                socket.on('image', function(img){
+                	//if(this.numclicks != 0){
+						//message += " - " + app.username;
+	                	console.log(img);
+	                	console.log("imagen cambiada");
+	                	//this.cambiarImg(img)
+	                    document.getElementById("ia").src = img;
+                	//}
+                });
+                socket.on('message', function(message){
+                	//message += " - " + app.username;
+                    app.messages.push(message);
+                });
+                socket.on('user', function(usr){
+                	//message += " - " + app.username;
+                	console.log(usr);
+                    app.nameU = usr;
+                });
+                
+            }
+        });
+    </script>
+</body>

@@ -1,0 +1,33 @@
+body{
+    background-image: linear-gradient(to right, #4680A0, #5A2A8E);
+    width:100%;
+}
+#chat{
+    height: 500px;
+    width: 100%;
+    overflow-y:scroll;
+    list-style: none;
+    padding:0;
+}
+#chat li{
+    padding:0.3rem 0rem 0.3rem 0.5rem;
+    border-bottom: 1px solid #dedede;
+}
+.title-page{
+    text-align: center;
+    color:white;
+    padding-top:0.6rem;
+    padding-bottom:0.6rem;
+}
+.container-chat{
+    background-color:white;
+    border-radius: 5px;
+
+}
+.btn.btn-chat{
+    color:white;
+    background-color:#41B883;
+    width: 100%;
+    border-radius: 0px;
+    font-size: 1.5rem;
+}
